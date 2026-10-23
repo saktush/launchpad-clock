@@ -5,6 +5,7 @@ Turns a Novation Launchpad Mini into a small clock display (macOS).
 - Hours (amber) in rows 0–3, minutes (green) in rows 4–7, 3×4 pixel font.
 - A red dot runs down the right-hand round buttons, one step per second.
 - Top-left round button (CC 104) toggles bright/dim.
+- Top buttons 2 and 3 show unread Dock badges of Telegram and Slack (green 0, yellow 1–4, red 5+, off if the app isn't running). Edit `APPS` in `notifications.py` to change apps.
 - Only changed pads are sent. Unplug the device and it waits and reconnects.
 
 **Supported:** Launchpad Mini mk1 and mk2 (same MIDI protocol). Not MK3 (RGB/SysEx).

@@ -4,6 +4,7 @@ from datetime import datetime
 
 from .font import DIGITS
 from .launchpad import DIM_RED, RED, Launchpad, dim
+from .notifications import APPS, POLL_S, badge, traffic_light
 from .screens import ClockScreen
 
 RECONNECT_S = 3
@@ -41,6 +42,7 @@ def font_sheet(screen):
 
 def run(screen):
     pad, bright = Launchpad(), True
+    counts, polled = {}, 0.0
     try:
         while True:
             try:
@@ -55,6 +57,11 @@ def run(screen):
                     grid = [[dim(c) for c in row] for row in grid]
                 pad.frame(grid)
                 pad.set_top(0, RED if bright else DIM_RED)
+                if time.monotonic() - polled >= POLL_S:
+                    counts, polled = {a: badge(a) for a in APPS}, time.monotonic()
+                for app, i in APPS.items():
+                    c = traffic_light(counts[app])
+                    pad.set_top(i, c if bright else dim(c))
                 if not pad.present():
                     raise OSError("device disconnected")
             except Exception as e:
