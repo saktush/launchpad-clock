@@ -26,6 +26,15 @@ python3 -m venv .venv
 .venv/bin/python -m launchpad_clock --font                # all digits + sample times
 ```
 
+Autostart at login (LaunchAgent, restarts on crash; waits for the device if unplugged):
+
+```bash
+scripts/install-launchd.sh              # install
+scripts/install-launchd.sh --uninstall  # remove
+```
+
+Log: `~/Library/Logs/launchpad-clock.log`. Re-run the installer if you move the project folder.
+
 Tests: `.venv/bin/pip install pytest && .venv/bin/python -m pytest`
 
 ## Layout
