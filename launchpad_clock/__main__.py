@@ -1,4 +1,5 @@
 import argparse
+import signal
 import time
 from datetime import datetime
 
@@ -8,7 +9,13 @@ from .notifications import APPS, POLL_S, badge, traffic_light
 from .screens import ClockScreen
 
 RECONNECT_S = 3
+WAKE_GAP_S = 5  # loop ticks every 0.1s; a longer wall-clock gap means the Mac slept
+REFRESH_S = 30  # resend every LED periodically in case the device lost state silently
 CHARS = {(1, 0): "R", (0, 1): "G", (1, 1): "A"}
+
+
+def log(msg):
+    print(f"{datetime.now():%Y-%m-%d %H:%M:%S} {msg}", flush=True)
 
 
 def ascii_grid(grid):
@@ -41,14 +48,27 @@ def font_sheet(screen):
 
 
 def run(screen):
+    signal.signal(signal.SIGTERM, signal.default_int_handler)  # launchctl stop -> clear LEDs too
     pad, bright = Launchpad(), True
     counts, polled = {}, 0.0
+    last_tick = last_refresh = time.time()
     try:
         while True:
             try:
+                now = time.time()
+                if now - last_tick > WAKE_GAP_S:
+                    # CoreMIDI endpoints can be recreated on wake while the old handle silently drops writes
+                    log(f"Woke after {now - last_tick:.0f}s gap; reopening port")
+                    pad.close(clear=False)
+                    polled = 0.0
+                last_tick = now
                 if not pad.is_open:
                     pad.open()
-                    print("Launchpad connected", flush=True)
+                    last_refresh = now
+                    log("Launchpad connected")
+                elif now - last_refresh >= REFRESH_S:
+                    pad.invalidate()
+                    last_refresh = now
                 for ev in pad.poll():
                     if ev == ("top", 0):
                         bright = not bright
@@ -66,7 +86,7 @@ def run(screen):
                     raise OSError("device disconnected")
             except Exception as e:
                 if pad.is_open:
-                    print(f"Lost Launchpad ({e}); waiting...", flush=True)
+                    log(f"Lost Launchpad ({e}); waiting...")
                 pad.close(clear=False)
                 time.sleep(RECONNECT_S)
                 continue

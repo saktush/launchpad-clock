@@ -29,7 +29,7 @@ def _find(names):
 class Launchpad:
     def __init__(self):
         self.out = self.inp = None
-        self._pads = {}
+        self._pads, self._default = {}, OFF  # _default None = device state unknown
 
     @property
     def is_open(self):
@@ -61,16 +61,20 @@ class Launchpad:
 
     def clear(self):
         self.out.send(mido.Message("control_change", control=0, value=0))
-        self._pads = {}
+        self._pads, self._default = {}, OFF
+
+    def invalidate(self):
+        """Forget the cache so the next frame resends every LED (device may have lost state)."""
+        self._pads, self._default = {}, None
 
     def set_pad(self, x, y, c):
         """x = column 0-8, y = row 0-7; only sends when the colour changed."""
-        if self._pads.get((x, y), OFF) != c:
+        if self._pads.get((x, y), self._default) != c:
             self.out.send(mido.Message("note_on", note=16 * y + x, velocity=c))
             self._pads[(x, y)] = c
 
     def set_top(self, i, c):
-        if self._pads.get(("top", i), OFF) != c:
+        if self._pads.get(("top", i), self._default) != c:
             self.out.send(mido.Message("control_change", control=TOP_CC + i, value=c))
             self._pads[("top", i)] = c
 
