@@ -7,6 +7,7 @@ DOMAIN=gui/$(id -u)
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 
 launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
+while launchctl print "$DOMAIN/$LABEL" >/dev/null 2>&1; do sleep 0.5; done  # bootout is async
 if [ "${1:-}" = "--uninstall" ]; then rm -f "$PLIST"; echo "Removed $LABEL"; exit 0; fi
 
 mkdir -p ~/Library/LaunchAgents ~/Library/Logs
