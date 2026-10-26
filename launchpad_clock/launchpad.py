@@ -39,12 +39,15 @@ class Launchpad:
     def present():
         return _find(mido.get_output_names()) is not None
 
-    def open(self):
+    def open(self, clear=True):
         o, i = _find(mido.get_output_names()), _find(mido.get_input_names())
         if not (o and i):
             raise OSError(f"{NAME} not found")
         self.out, self.inp = mido.open_output(o), mido.open_input(i)
-        self.clear()
+        if clear:
+            self.clear()
+        else:
+            self.invalidate()
 
     def close(self, clear=True):
         if clear and self.out:

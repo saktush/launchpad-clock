@@ -10,7 +10,7 @@ from .screens import ClockScreen
 
 RECONNECT_S = 3
 WAKE_GAP_S = 5  # loop ticks every 0.1s; a longer wall-clock gap means the Mac slept
-REFRESH_S = 30  # resend every LED periodically in case the device lost state silently
+REFRESH_S = 30  # reopen the port and resend every LED, in case the handle or device state died silently
 CHARS = {(1, 0): "R", (0, 1): "G", (1, 1): "A"}
 
 
@@ -67,7 +67,9 @@ def run(screen):
                     last_refresh = now
                     log("Launchpad connected")
                 elif now - last_refresh >= REFRESH_S:
-                    pad.invalidate()
+                    # display sleep / USB re-enumeration does not freeze us (no gap) yet kills the handle
+                    pad.close(clear=False)
+                    pad.open(clear=False)
                     last_refresh = now
                 for ev in pad.poll():
                     if ev == ("top", 0):
